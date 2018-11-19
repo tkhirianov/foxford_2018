@@ -39,7 +39,10 @@ def draw_foundation(x0, y0, width, height):
 
     
 def draw_walls(x0, y0, width, height):
-    pass
+    walls = Rectangle(Point(x0-width//2, y0-height), Point(x0+width//2, y0))
+    walls.setWidth(3)
+    walls.setFill("gray")
+    walls.draw(win)
     print("Стены", x0, y0, width, height)
 
 
