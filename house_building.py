@@ -4,7 +4,11 @@ win_width = 600
 win_height = 500
 
 def main():
+    global win
+    win = GraphWin("Картина graphics. Автор: Тимофей Фёдорович", win_width, win_height)
     draw_house(win_width//3, win_height*2//3, 150, 200)
+    cursor_point = win.getMouse()
+    win.close()
 
 
 def draw_house(x0, y0, width, height):
@@ -27,7 +31,10 @@ def draw_house(x0, y0, width, height):
 
 
 def draw_foundation(x0, y0, width, height):
-    pass
+    foundation = Rectangle(Point(x0-width//2, y0-height), Point(x0+width//2, y0))
+    foundation.setWidth(3)
+    foundation.setFill("brown")
+    foundation.draw(win)
     print("Основание", x0, y0, width, height)
 
     
@@ -45,4 +52,7 @@ def draw_window(x0, y0, width, height):
     pass
     print("Окно", x0, y0, width, height)
 
+
+
 main()
+
