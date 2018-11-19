@@ -52,7 +52,10 @@ def draw_roof(x0, y0, width, height):
 
     
 def draw_window(x0, y0, width, height):
-    pass
+    window = Rectangle(Point(x0-width//2, y0-height), Point(x0+width//2, y0))
+    window.setWidth(3)
+    window.setFill("yellow")
+    window.draw(win)
     print("Окно", x0, y0, width, height)
 
 
