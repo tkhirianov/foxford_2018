@@ -2,18 +2,13 @@ import tkinter
 import time
 from random import randint
 
+# --------- GAME CONTROLLER: ----------
 # Режим игры - игра идёт или нет
 game_began = False
 sleep_time = 50  # ms
 scores = 0
 
-initial_balls_number = 5
 
-# Список шариков, каждый из которых - список: [x, y, dx, dy, r, oval_id]
-balls = []
-
-
-# --------- GAME CONTROLLER: ----------
 def tick():
     time_label.after(sleep_time, tick)
     time_label['text'] = time.strftime('%H:%M:%S')
@@ -36,6 +31,11 @@ def button_stop_game_handler():
 
 
 # --------- GAME MODEL: ----------
+# Список шариков, каждый из которых - список: [x, y, dx, dy, r, oval_id]
+initial_balls_number = 5
+balls = []
+
+
 def game_start():
     for i in range(initial_balls_number):
         ball = ball_create()
