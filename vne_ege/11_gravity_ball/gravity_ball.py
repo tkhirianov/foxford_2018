@@ -1,5 +1,6 @@
 import tkinter
 import time
+import math
 from random import randint
 
 
@@ -37,6 +38,8 @@ def button_stop_game_handler():
 # --------- GAME MODEL: ----------
 initial_balls_number = 5
 balls = []  # список объектов типа Ball
+t = 0
+dt = 0.05  # Квант модельного (рассчётного) времени.
 
 
 def game_start():
@@ -51,17 +54,22 @@ def game_stop():
 
 
 def game_step():
+    global t
     for ball in balls:
         ball.step()
+    t += dt
 
 
 class Ball:
+    density = 1.0  # стандартная плотность
+
     def __init__(self):
         self.r = randint(10, 30)
+        self.m = self.density*math.pi*self.r**2  # Масса пропорциональна площади, т.е. квадрату радиуса.
         self.x = randint(0 + self.r, canvas_width - self.r)
         self.y = randint(0 + self.r, canvas_height - self.r)
-        self.dx = randint(-4, 4)
-        self.dy = randint(-4, 4)
+        self.Vx = randint(-100, 100)
+        self.Vy = randint(-100, 100)
         self.oval_id = canvas.create_oval(self.x - self.r, self.y - self.r,
                                           self.x + self.r, self.y + self.r,
                                           fill='green')
@@ -74,15 +82,26 @@ class Ball:
         """ Сдвигает шарик ball в соответствии с его скоростью.
         """
         if self.oval_id is not None:
-            self.x += self.dx
-            self.y += self.dy
+            Fx, Fy = self.force()
+            ax = Fx / self.m
+            ay = Fy / self.m
+
+            self.x += self.Vx*dt + ax*dt**2 / 2
+            self.y += self.Vy*dt + ay*dt**2 / 2
+            self.Vx += ax*dt
+            self.Vy += ay*dt
+
             if self.x + self.r >= canvas_width or self.x - self.r <= 0:
-                self.dx = -self.dx
+                self.Vx = -self.Vx
             if self.y + self.r >= canvas_height or self.y - self.r <= 0:
-                self.dy = -self.dy
+                self.Vy = -self.Vy
             canvas.coords(self.oval_id, (self.x - self.r, self.y - self.r,
                                          self.x + self.r, self.y + self.r))
 
+    def force(self):
+        Fx = 0
+        Fy = self.m*9.8  # default gravity
+        return Fx, Fy
 
 # --------- GAME VIEW: ----------
 root = tkinter.Tk("Лопни шарик!")
