@@ -32,6 +32,12 @@ class Game:
             ball.step(self.dt)
         self.t += self.dt
 
+    def click(self, x, y):
+        for i in range(len(self.balls)-1, -1, -1):
+            if self.balls[i].overlap(x, y):
+                self.balls[i].delete()
+                self.balls.pop(i)
+
     def game_over(self):
         for ball in self.balls:
             ball.delete()
@@ -81,12 +87,16 @@ class Ball:
         Fy = self.m * 9.8  # default gravity
         return Fx, Fy
 
+    def overlap(self, x, y):
+        return (self.x - x)**2 + (self.y - y)**2 <= self.r**2
+
 
 # --------- GAME CONTROLLER: ----------
 # Режим игры - игра идёт или нет
 game_began = False
 sleep_time = 50  # ms
 scores = 0
+
 
 def tick():
     time_label.after(sleep_time, tick)
@@ -109,6 +119,11 @@ def button_stop_game_handler():
         game_began = False
 
 
+def canvas_click_handler(event):
+    if game_began:
+        game.click(event.x, event.y)
+
+
 # --------- GAME VIEW: ----------
 root = tkinter.Tk("Лопни шарик!")
 
@@ -126,6 +141,7 @@ scores_text = tkinter.Label(buttons_panel, text="Ваши очки: 0")
 scores_text.pack(side=tkinter.RIGHT)
 canvas = tkinter.Canvas(root, bg='lightgray', width=canvas_width, height=canvas_height)
 canvas.pack(anchor="nw", fill=tkinter.BOTH, expand=1)
+canvas.bind("<Button-1>", canvas_click_handler)
 
 game = Game()
 
