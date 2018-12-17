@@ -8,12 +8,13 @@ canvas_width = 640
 canvas_height = 480
 default_initial_balls_number = 10
 
-# --------- GAME MODEL: ----------
 
+# --------- GAME MODEL: ----------
 class Game:
     def __init__(self, initial_balls_number):
         self.initial_balls_number = initial_balls_number
         self.balls = []  # список объектов типа Ball
+        self.tank = Tank(canvas_width//2, canvas_height, "darkgreen")
         self.t = 0
         self.dt = 0.05  # Квант модельного (рассчётного) времени.
         self.paused = True
@@ -39,15 +40,21 @@ class Game:
         self.t += self.dt
 
     def click(self, x, y):
+        # TODO: поменять логику клика - теперь это должен быть выстрел танка (откуда брать энергию?)
         for i in range(len(self.balls)-1, -1, -1):
             if self.balls[i].overlap(x, y):
                 self.balls[i].delete()
                 self.balls.pop(i)
 
+    def mouse_motion(self, x, y):
+        """ При движении мышкой вызываем для танка (пока что единственного) его алгоритм прицеливания """
+        self.tank.aim(x,     y)
+
     def game_over(self):
         for ball in self.balls:
             ball.delete()
         print("Конец игры!")
+        self.tank.delete()
 
 
 class Ball:
@@ -110,6 +117,61 @@ class Ball:
         other.Vx = other.Vx + (-Vother_normal + Vself_normal) * ix
         other.Vy = other.Vy + (-Vother_normal + Vself_normal) * iy
 
+
+class Tank:
+    """
+    Танк, который умеет прицеливаться в заданную точку и порождать снаряды.
+    """
+    gun_length = 30
+    turret_radius = 15
+
+    def __init__(self, x, y, color):
+        """
+            x, y - точка центра турели
+            dx, dy - вектор ствола танка
+        """
+        self.x = x
+        self.y = y
+        self.dx = 0
+        self.dy = -1
+        self.turret_avatar = canvas.create_arc(self.x - self.turret_radius, self.y - self.turret_radius,
+                                               self.x + self.turret_radius, self.y + self.turret_radius,
+                                               start=0., extent=180, fill=color)
+        x1, y1, x2, y2 = self._gun_xy()
+        self.gun_avatar = canvas.create_line(x1, y1, x2, y2, width=5, fill=color)
+        # TODO: закончить конструктор, продумать все свойства
+
+    def _gun_xy(self):
+        """
+        :return: (x1, y1, x2, y2) экранные координаты начала и конца ствола пушки
+        """
+        x1 = self.x + self.dx * self.turret_radius
+        y1 = self.y + self.dy * self.turret_radius
+        x2 = self.x + self.dx * self.gun_length
+        y2 = self.y + self.dy * self.gun_length
+        return x1, y1, x2, y2
+
+    def aim(self, x, y):
+        """ Прицеливание ствола в сторону точки (x, y)"""
+        r = ((x - self.x)**2 + (y - self.y)**2)**0.5
+        self.dx = (x - self.x) / r
+        self.dy = (y - self.y) / r
+        x1, y1, x2, y2 = self._gun_xy()
+        canvas.coords(self.gun_avatar, x1, y1, x2, y2)
+        print("Типа прицеливаюсь в ({}, {}).".format(x, y))
+
+    def fire(self, energy):
+        """
+        Стреляет снарядом, порождая новый объект типа "летящий снаряд".
+        :param energy: Энергия выстрела - положительное дробное число.
+        :return: Снаряд, который будет поражать цели.
+        """
+        pass  # TODO: пока снаряд не порождается.
+        print("Типа выстрелили!")
+
+    def delete(self):
+        pass  # TODO: корректно удалять аватары танка с холста
+
 # --------- GAME CONTROLLER: ----------
 # Режим игры - игра идёт или нет
 game_began = False
@@ -143,6 +205,10 @@ def canvas_click_handler(event):
         game.click(event.x, event.y)
 
 
+def canvas_mouse_motion_handler(event):
+    if game_began:
+        game.mouse_motion(event.x, event.y)
+
 # --------- GAME VIEW: ----------
 root = tkinter.Tk("Лопни шарик!")
 
@@ -161,6 +227,7 @@ scores_text.pack(side=tkinter.RIGHT)
 canvas = tkinter.Canvas(root, bg='lightgray', width=canvas_width, height=canvas_height)
 canvas.pack(anchor="nw", fill=tkinter.BOTH, expand=1)
 canvas.bind("<Button-1>", canvas_click_handler)
+canvas.bind("<Motion>", canvas_mouse_motion_handler)
 
 game = Game(default_initial_balls_number)
 
