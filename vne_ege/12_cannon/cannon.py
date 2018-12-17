@@ -7,7 +7,10 @@ from random import randint
 canvas_width = 640
 canvas_height = 480
 default_initial_balls_number = 10
-
+max_fire_energy = 200  # максимальное количество условных единиц энергии при стрельбе
+max_click_time = 2  # максимальное количество секунд для набора энергии выстрела
+default_ball_color = "yellow"
+missile_color = "red"
 
 # --------- GAME MODEL: ----------
 class Game:
@@ -15,11 +18,14 @@ class Game:
         self.initial_balls_number = initial_balls_number
         self.balls = []  # список объектов типа Ball
         self.tank = Tank(canvas_width//2, canvas_height, "darkgreen")
+        self.missiles = []
+
         self.t = 0
         self.dt = 0.05  # Квант модельного (рассчётного) времени.
         self.paused = True
+        self._click_time = None
         for i in range(initial_balls_number):
-            ball = Ball()
+            ball = Ball(default_ball_color)
             self.balls.append(ball)
 
     def start(self):
@@ -29,39 +35,69 @@ class Game:
         self.paused = True
 
     def step(self):
+        # доступ к флажку контроллера нужен для передачи ему информации, что игра кончилась:
+        global game_began
+
         # рассчёт полёта каждого шарика:
         for ball in self.balls:
             ball.step(self.dt)
+        # рассчёт полёта каждого шарика:
+        for missile in self.missiles:
+            missile.step(self.dt)
         # рассчёт столкновений шариков:
         for i in range(len(self.balls)):
             for k in range(i+1, len(self.balls)):
                 if self.balls[i].intersect(self.balls[k]):
                     self.balls[i].collide(self.balls[k])
+        # Удаляем шарики, которые коснулись снаряда
+        for k in range(len(self.missiles)-1, -1, -1):
+            for i in range(len(self.balls)-1, -1, -1):
+                if self.missiles[k].intersect(self.balls[i]):
+                    print("Поражение!")
+                    self.balls[i].delete()
+                    self.balls.pop(i)
+                    self.missiles[k].delete()
+                    self.missiles.pop(k)
+                    break
+        # Определяем факт конца игры (раунда):
+        if not self.balls:
+            self.game_over()
+            game_began = False
         self.t += self.dt
 
     def click(self, x, y):
-        # TODO: поменять логику клика - теперь это должен быть выстрел танка (откуда брать энергию?)
-        for i in range(len(self.balls)-1, -1, -1):
-            if self.balls[i].overlap(x, y):
-                self.balls[i].delete()
-                self.balls.pop(i)
+        """ Подготовка к выстрелу танка.
+        """
+        self._click_time = time.time()
+
+    def release(self, x, y):
+        """ Подготовка к выстрелу танка.
+        """
+        delta_t = time.time() - self._click_time
+        energy = max_fire_energy * (1 if delta_t > max_click_time else delta_t / max_click_time)
+
+        self.tank.aim(x, y)
+        missile = self.tank.fire(energy)
+        self.missiles.append(missile)
 
     def mouse_motion(self, x, y):
         """ При движении мышкой вызываем для танка (пока что единственного) его алгоритм прицеливания """
-        self.tank.aim(x,     y)
+        self.tank.aim(x, y)
 
     def game_over(self):
         for ball in self.balls:
             ball.delete()
-        print("Конец игры!")
+        for missile in self.missiles:
+            missile.delete()
         self.tank.delete()
+        print("Конец игры!")
 
 
 class Ball:
     density = 1.0  # стандартная плотность
 
-    def __init__(self):
-        self.r = randint(10, 30)
+    def __init__(self, color):
+        self.r = randint(20, 50)
         self.m = self.density * math.pi * self.r ** 2  # Масса пропорциональна площади, т.е. квадрату радиуса.
         self.x = randint(0 + self.r, canvas_width - self.r)
         self.y = randint(0 + self.r, canvas_height - self.r)
@@ -69,7 +105,7 @@ class Ball:
         self.Vy = randint(-100, 100)
         self.oval_id = canvas.create_oval(self.x - self.r, self.y - self.r,
                                           self.x + self.r, self.y + self.r,
-                                          fill='green')
+                                          fill=color)
 
     def delete(self):
         canvas.delete(self.oval_id)
@@ -124,6 +160,7 @@ class Tank:
     """
     gun_length = 30
     turret_radius = 15
+    gun_width = 8
 
     def __init__(self, x, y, color):
         """
@@ -138,8 +175,7 @@ class Tank:
                                                self.x + self.turret_radius, self.y + self.turret_radius,
                                                start=0., extent=180, fill=color)
         x1, y1, x2, y2 = self._gun_xy()
-        self.gun_avatar = canvas.create_line(x1, y1, x2, y2, width=5, fill=color)
-        # TODO: закончить конструктор, продумать все свойства
+        self.gun_avatar = canvas.create_line(x1, y1, x2, y2, width=self.gun_width, fill=color)
 
     def _gun_xy(self):
         """
@@ -158,7 +194,6 @@ class Tank:
         self.dy = (y - self.y) / r
         x1, y1, x2, y2 = self._gun_xy()
         canvas.coords(self.gun_avatar, x1, y1, x2, y2)
-        print("Типа прицеливаюсь в ({}, {}).".format(x, y))
 
     def fire(self, energy):
         """
@@ -166,11 +201,23 @@ class Tank:
         :param energy: Энергия выстрела - положительное дробное число.
         :return: Снаряд, который будет поражать цели.
         """
-        pass  # TODO: пока снаряд не порождается.
-        print("Типа выстрелили!")
+        missile = Ball(missile_color)
+        x1, y1, x2, y2 = self._gun_xy()
+        missile.x = x2
+        missile.y = y2
+        missile.r = self.gun_width // 2
+        missile.Vx = self.dx * energy
+        missile.Vy = self.dy * energy
+        missile.step(0)
+        return missile
 
     def delete(self):
-        pass  # TODO: корректно удалять аватары танка с холста
+        """ удаляет аватары танка с холста"""
+        canvas.delete(self.gun_avatar)
+        self.gun_avatar = None
+        canvas.delete(self.turret_avatar)
+        self.turret_avatar = None
+
 
 # --------- GAME CONTROLLER: ----------
 # Режим игры - игра идёт или нет
@@ -200,14 +247,20 @@ def button_stop_game_handler():
         game_began = False
 
 
-def canvas_click_handler(event):
+def mouse_click_handler(event):
     if game_began:
         game.click(event.x, event.y)
 
 
-def canvas_mouse_motion_handler(event):
+def mouse_release_handler(event):
+    if game_began:
+        game.release(event.x, event.y)
+
+
+def mouse_motion_handler(event):
     if game_began:
         game.mouse_motion(event.x, event.y)
+
 
 # --------- GAME VIEW: ----------
 root = tkinter.Tk("Лопни шарик!")
@@ -226,8 +279,9 @@ scores_text = tkinter.Label(buttons_panel, text="Ваши очки: 0")
 scores_text.pack(side=tkinter.RIGHT)
 canvas = tkinter.Canvas(root, bg='lightgray', width=canvas_width, height=canvas_height)
 canvas.pack(anchor="nw", fill=tkinter.BOTH, expand=1)
-canvas.bind("<Button-1>", canvas_click_handler)
-canvas.bind("<Motion>", canvas_mouse_motion_handler)
+canvas.bind("<Button-1>", mouse_click_handler)
+canvas.bind("<ButtonRelease-1>", mouse_release_handler)
+canvas.bind("<Motion>", mouse_motion_handler)
 
 game = Game(default_initial_balls_number)
 
