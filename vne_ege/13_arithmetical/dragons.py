@@ -1,3 +1,6 @@
+from random import randint
+
+
 def main():
     name = input("Введите имя игрока:")
     hero = Hero(name)
@@ -56,17 +59,34 @@ class Dragon(BattleUnit):
     def __init__(self, color: str):
         super().__init__(Dragon.default_initial_health, Dragon.default_attack_force)
         self._color = color
+        self._answer = None
 
     def get_question(self) -> str:
         """ Генерирует новый вопрос и запоминает ответ."""
-        pass
+        op1 = randint(1, 10)
+        op2 = randint(1, 10)
+
+        operation = randint(1, 3)
+        if operation == 1:  # plus
+            operation_sign = '+'
+            answer = op1 + op2
+        elif operation == 2:  # minus
+            operation_sign = '-'
+            answer = op1 - op2
+        else:
+            operation_sign = '*'
+            answer = op1 * op2
+        question = str(op1) + ' ' + operation_sign + ' ' + str(op2)
+
+        self._answer = answer
+        return question
 
     def check_answer(self, answer: str) -> bool:
         """ Проверяет ответ на корректность. """
-        pass
+        return answer == self._answer
 
     def get_color(self) -> str:
-        pass
+        return self._color
 
 
 class GameRound:
