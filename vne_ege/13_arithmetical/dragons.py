@@ -69,18 +69,6 @@ class Dragon(BattleUnit):
         pass
 
 
-class Battle:
-    """
-    Проводит бой между игроком и драконом до полной победы одного из них.
-    """
-    def __init__(self, hero, dragon):
-        pass
-
-    def fight(self):
-        """ Собственно, запускает битву."""
-        pass
-
-
 class GameRound:
     """ Контролирует один игровой раунд. """
 
@@ -100,14 +88,26 @@ class GameRound:
 
         while self._enemy_list and self._hero.get_health() > 0:
             dragon = self._enemy_list.pop(0)
-            battle = Battle(self._hero, dragon)
-            battle.fight()
+            self.fight(self._hero, dragon)
 
         print("Конец раунда!")
         if self._hero.get_health() > 0:
             print("Вы победили! Поздравляем!")
         else:
             print("Вы проиграли... Ваш герой повержен!")
+
+    @staticmethod
+    def fight(hero, dragon):
+        """
+        Проводит бой между игроком и драконом до полной победы одного из них.
+        """
+        while dragon.get_health() > 0 or hero.get_health() > 0:
+            question = dragon.get_question()
+            answer = hero.get_answer(question)
+            if dragon.check_answer(answer):
+                hero.cause_damage(dragon)
+            else:
+                dragon.cause_damage(hero)
 
 
 main()
