@@ -22,7 +22,9 @@ class BattleUnit:
 
     def cause_damage(self, other):
         """ Причинить урон другой боевой единице."""
-        pass
+        other._health -= self._attack_force
+        if other._health < 0:
+            other._health = 0
 
 
 class Hero(BattleUnit):
