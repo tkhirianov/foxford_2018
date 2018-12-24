@@ -37,8 +37,10 @@ class Hero(BattleUnit):
         self._name = name
         self._scores = 0
 
-    def get_answer(self, question: str) -> str:
-        pass
+    @staticmethod
+    def get_answer(question: str) -> str:
+        answer = input("Введите чему равно: " + question + "= ")
+        return answer
 
     def get_name(self) -> str:
         return self._name
