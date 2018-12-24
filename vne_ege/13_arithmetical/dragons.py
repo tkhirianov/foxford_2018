@@ -1,6 +1,9 @@
 def main():
     name = input("Введите имя игрока:")
-    print("Когда игра будет написана, вы сможете поиграть,", name)
+    hero = Hero(name)
+    game_round = GameRound(hero)
+    game_round.play()
+    print("Вы набрали", hero.get_scores(), "очков.")
 
 
 class BattleUnit:
@@ -26,15 +29,19 @@ class Hero(BattleUnit):
     default_initial_health = 100
     default_attack_force = 10
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         super().__init__(Hero.default_initial_health, Hero.default_attack_force)
         self._name = name
+        self._scores = 0
 
     def get_answer(self, question: str) -> str:
         pass
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self._name
+
+    def get_scores(self) -> int:
+        return self._scores
 
 
 class Dragon(BattleUnit):
