@@ -80,16 +80,14 @@ class Battle:
         """ Собственно, запускает битву."""
         pass
 
-    def hero_won(self) -> bool:
-        """ Правда, если бой выиграл герой."""
-
 
 class GameRound:
     """ Контролирует один игровой раунд. """
 
     def __init__(self, hero):
         """ Генерирует список драконов (игровой уровень). """
-        pass
+        self._hero = hero
+        self._enemy_list = [Dragon("зелёный")]
 
     def play(self):
         """ Запускает игровой раунд
@@ -97,7 +95,19 @@ class GameRound:
           2) Последовательно запускает бои между героем и очередным драконом.
           3) Отображает результаты игрового раунда.
         """
-        pass
+        print("Начало раунда!")
+        print("Вам предстоит победить", len(self._enemy_list), "врагов!")
+
+        while self._enemy_list and self._hero.get_health() > 0:
+            dragon = self._enemy_list.pop(0)
+            battle = Battle(self._hero, dragon)
+            battle.fight()
+
+        print("Конец раунда!")
+        if self._hero.get_health() > 0:
+            print("Вы победили! Поздравляем!")
+        else:
+            print("Вы проиграли... Ваш герой повержен!")
 
 
 main()
