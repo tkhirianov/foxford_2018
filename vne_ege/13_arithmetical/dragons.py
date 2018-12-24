@@ -23,8 +23,18 @@ class Hero(BattleUnit):
     """
     Должен отвечать на заданный вопрос.
     """
+    default_initial_health = 100
+    default_attack_force = 10
+
+    def __init__(self, name):
+        super().__init__(Hero.default_initial_health, Hero.default_attack_force)
+        self._name = name
+
     def get_answer(self, question: str) -> str:
         pass
+
+    def get_name(self):
+        return self._name
 
 
 class Dragon(BattleUnit):
@@ -33,12 +43,22 @@ class Dragon(BattleUnit):
       1) загадывать загадку и запоминать ответ,
       2) проверять корректность ответов.
     """
-    def get_question(self):
+    default_initial_health = 30
+    default_attack_force = 5
+
+    def __init__(self, color: str):
+        super().__init__(Dragon.default_initial_health, Dragon.default_attack_force)
+        self._color = color
+
+    def get_question(self) -> str:
         """ Генерирует новый вопрос и запоминает ответ."""
         pass
 
     def check_answer(self, answer: str) -> bool:
         """ Проверяет ответ на корректность. """
+        pass
+
+    def get_color(self) -> str:
         pass
 
 
