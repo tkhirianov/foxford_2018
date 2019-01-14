@@ -125,7 +125,7 @@ class GameRound:
         """
         Проводит бой между игроком и драконом до полной победы одного из них.
         """
-        while dragon.get_health() > 0 or hero.get_health() > 0:
+        while dragon.get_health() > 0 and hero.get_health() > 0:
             question = dragon.get_question()
             answer = hero.get_answer(question)
             if dragon.check_answer(answer):
